@@ -39,6 +39,11 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('deleteStockBtn').addEventListener('click', handleDeleteStock);
     document.getElementById('clearCacheBtn').addEventListener('click', handleClearCache);
     
+    // 綁定匯出與匯入按鈕
+    document.getElementById('exportBtn').addEventListener('click', handleExportPortfolio);
+    document.getElementById('importBtn').addEventListener('click', () => document.getElementById('importFile').click());
+    document.getElementById('importFile').addEventListener('change', handleImportPortfolio);
+    
     // 初始化目標金額標示
     updateTargetLabels();
     
@@ -363,4 +368,88 @@ async function handleClearCache() {
         btn.disabled = false;
         btn.innerHTML = `🔄 強制更新最新股利資料`;
     }
+}
+
+// 處理匯出投資組合為 JSON 檔案
+function handleExportPortfolio() {
+    const portfolio = localStorage.getItem('portfolio');
+    if (!portfolio || JSON.parse(portfolio).length === 0) {
+        alert('目前您的投資組合為空，無資料可匯出！');
+        return;
+    }
+    const blob = new Blob([portfolio], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `dividend_portfolio_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+// 處理匯入 JSON 檔案並更新投資組合
+function handleImportPortfolio(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const importedData = JSON.parse(e.target.result);
+            
+            // 驗證格式結構是否為陣列
+            if (!Array.isArray(importedData)) {
+                throw new Error('匯入的資料格式必須是 JSON 陣列。');
+            }
+            
+            // 驗證陣列中每個元素是否都有 stock_id (string) 與 shares (number)
+            const isValid = importedData.every(item => 
+                item && 
+                typeof item.stock_id === 'string' && 
+                (typeof item.shares === 'number' || !isNaN(parseFloat(item.shares)))
+            );
+            
+            if (!isValid) {
+                throw new Error('備份檔案內部的欄位格式不正確 (需包含 stock_id 與 shares)。');
+            }
+
+            // 格式化數據
+            const formattedData = importedData.map(item => ({
+                stock_id: item.stock_id.toUpperCase().trim(),
+                shares: parseFloat(item.shares)
+            }));
+
+            // 詢問使用者要覆蓋還是合併
+            const confirmCover = confirm('📦 偵測到有效的投資組合備份！\n\n您要「覆蓋」目前的持股嗎？\n- 點擊【確定】：直接覆蓋目前的持股資料。\n- 點擊【取消】：將備份資料與現有持股合併（相同股票的股數會累加）。');
+            
+            let newPortfolio = [];
+            if (confirmCover) {
+                newPortfolio = formattedData;
+            } else {
+                const currentPortfolio = JSON.parse(localStorage.getItem('portfolio')) || [];
+                newPortfolio = [...currentPortfolio];
+                
+                formattedData.forEach(importedItem => {
+                    const exists = newPortfolio.find(item => item.stock_id.toUpperCase() === importedItem.stock_id.toUpperCase());
+                    if (exists) {
+                        exists.shares += importedItem.shares;
+                    } else {
+                        newPortfolio.push(importedItem);
+                    }
+                });
+            }
+
+            // 儲存並更新 UI
+            localStorage.setItem('portfolio', JSON.stringify(newPortfolio));
+            alert('🎉 投資組合匯入成功！');
+            updateUI();
+        } catch (err) {
+            alert('❌ 匯入失敗：' + err.message + '\n請確保您選擇的是正確的股利計算機備份 JSON 檔。');
+        } finally {
+            // 清空 file input，以便下次選同一個檔案也能觸發 change 事件
+            event.target.value = '';
+        }
+    };
+    reader.readAsText(file);
 }
