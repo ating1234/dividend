@@ -37,6 +37,21 @@ export default {
   }
 };
 
+// 偽裝瀏覽器 User-Agent 的 fetch 輔助函數
+async function fetchWithUA(url: string): Promise<Response> {
+  const res = await fetch(url, {
+    headers: {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+      "Accept": "application/json"
+    }
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Yahoo API 請求失敗 (狀態碼 ${res.status}): ${text.substring(0, 100).trim()}`);
+  }
+  return res;
+}
+
 // 處理股利與股價查詢
 async function handleDividendRequest(url: URL, env: Env): Promise<Response> {
   const stockId = url.searchParams.get("stock_id");
@@ -83,14 +98,14 @@ async function handleDividendRequest(url: URL, env: Env): Promise<Response> {
     
     // 嘗試上市後綴 .TW
     let yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${stockIdClean}.TW?interval=1d&range=5d`;
-    let response = await fetch(yahooUrl);
+    let response = await fetchWithUA(yahooUrl);
     let resultJson: any = await response.json();
     
     if (!resultJson.chart.result) {
       // 嘗試上櫃後綴 .TWO
       suffix = "TWO";
       yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${stockIdClean}.TWO?interval=1d&range=5d`;
-      response = await fetch(yahooUrl);
+      response = await fetchWithUA(yahooUrl);
       resultJson = await response.json();
     }
 
@@ -138,7 +153,7 @@ async function handleDividendRequest(url: URL, env: Env): Promise<Response> {
     // 4. 若無快取或快取過期，撈取歷史配息 (抓 5 年的配息紀錄)
     // 為了支持 1, 2, 3, 5 年平均，我們直接撈取 5 年 (5y) 範圍，在代碼中進行對應年份過濾
     const divUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${stockIdClean}.${suffix}?interval=1d&range=5y&events=div`;
-    const divResponse = await fetch(divUrl);
+    const divResponse = await fetchWithUA(divUrl);
     const divResultJson: any = await divResponse.json();
     
     if (!divResultJson.chart.result) {
