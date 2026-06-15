@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Node.js
+node_modules/
+.wrangler/
+worker-configuration.d.ts
+
+# 本地 SQLite 資料庫
+portfolio.db
+
+# macOS System Files
+.DS_Store

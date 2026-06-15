@@ -1,0 +1,16 @@
+{
+  "name": "dividend-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-06-15",
+  "compatibility_flags": [ "nodejs_compat" ],
+  "observability": {
+    "enabled": true
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "dividend-db",
+      "database_id": "REPLACE_WITH_YOUR_D1_DATABASE_ID_LATER"
+    }
+  ]
+}

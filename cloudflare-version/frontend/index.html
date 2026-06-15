@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📊 台股股利目標與缺口計算機 (Cloudflare Edge)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Noto+Sans+TC:wght@300;400;700&display=swap" rel="stylesheet">
+    <!-- ApexCharts -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <style>
+        body {
+            font-family: 'Outfit', 'Noto Sans TC', sans-serif;
+            background-color: #F8F9FA;
+            color: #1E293B;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05);
+        }
+        .text-gradient {
+            background: linear-gradient(135deg, #FF6B6B 0%, #FF8B3D 50%, #4D96FF 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-6">
+        
+        <!-- 左側設定欄 -->
+        <div class="lg:col-span-1 flex flex-col gap-6">
+            <div class="glass-card rounded-2xl p-6 flex flex-col gap-5">
+                <h2 class="text-xl font-bold border-b pb-3 border-gray-200">⚙️ 財務規劃設定</h2>
+                
+                <!-- 股利目標 -->
+                <div>
+                    <label class="block text-sm font-semibold text-slate-500 mb-2">每月期望股利目標 (元)</label>
+                    <input type="number" id="monthlyTarget" value="30000" step="5000" class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <p class="text-xs text-slate-400 mt-1">年度總目標：<span id="annualTargetLabel" class="font-bold">360,000</span> 元</p>
+                </div>
+                
+                <!-- 平均年數選擇 -->
+                <div>
+                    <label class="block text-sm font-semibold text-slate-500 mb-2">平均股利計算年數</label>
+                    <select id="selectedYears" class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="1">1 年平均</option>
+                        <option value="2">2 年平均</option>
+                        <option value="3">3 年平均</option>
+                        <option value="5" selected>5 年平均</option>
+                    </select>
+                </div>
+
+                <!-- 強制重刷快取 -->
+                <button id="clearCacheBtn" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-semibold py-2 rounded-lg transition-colors flex items-center justify-center gap-2">
+                    🔄 強制更新最新股利資料
+                </button>
+
+                <hr class="border-gray-200">
+
+                <!-- 新增持股 -->
+                <div>
+                    <h3 class="text-md font-bold mb-3">➕ 新增持股標的</h3>
+                    <div class="flex flex-col gap-3">
+                        <div>
+                            <input type="text" id="newStockId" placeholder="股票/ETF 代碼 (如: 2330)" class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <input type="number" id="newShares" placeholder="目前持有股數" step="1000" class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <button id="addStockBtn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 rounded-lg transition-colors">
+                            新增至投資組合
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右側內容與數據呈現 -->
+        <div class="lg:col-span-3 flex flex-col gap-6">
+            
+            <!-- 標題 -->
+            <div>
+                <h1 class="text-4xl font-bold text-gradient">📊 台股股利目標與缺口計算機</h1>
+                <p class="text-slate-500 mt-2 text-sm md:text-base">基於 Cloudflare Workers + D1 邊緣運算，以過去平均配息資料為核心，精準分析您的財務自由進度與缺口</p>
+            </div>
+
+            <!-- 目前投資組合表格 -->
+            <div class="glass-card rounded-2xl p-6">
+                <h3 class="text-lg font-bold mb-4">💼 目前投資組合</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-gray-200 text-slate-500 text-sm">
+                                <th class="pb-3">代碼</th>
+                                <th class="pb-3">名稱</th>
+                                <th class="pb-3">目前股價</th>
+                                <th class="pb-3"><span class="years-label">5</span>年平均股利</th>
+                                <th class="pb-3"><span class="years-label">5</span>年平均殖利率</th>
+                                <th class="pb-3">持有股數</th>
+                                <th class="pb-3">市值</th>
+                                <th class="pb-3">預估年股利</th>
+                                <th class="pb-3">有效年數</th>
+                            </tr>
+                        </thead>
+                        <tbody id="portfolioTableBody" class="text-sm">
+                            <!-- JS 動態渲染 -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 刪除股票區塊 -->
+                <div class="mt-4 flex gap-4 max-w-md">
+                    <select id="deleteStockSelect" class="flex-grow bg-white border border-gray-300 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <!-- JS 動態渲染 -->
+                    </select>
+                    <button id="deleteStockBtn" class="bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-lg transition-colors font-semibold">
+                        刪除所選股票
+                    </button>
+                </div>
+            </div>
+
+            <!-- 核心指標卡片 -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="glass-card rounded-2xl p-5">
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">目前資產總市值</span>
+                    <div class="text-2xl font-bold text-blue-900 mt-1" id="totalMarketValue">$0</div>
+                </div>
+                <div class="glass-card rounded-2xl p-5">
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">年預估股利收入</span>
+                    <div class="text-2xl font-bold text-blue-900 mt-1" id="totalAnnualDividend">$0</div>
+                </div>
+                <div class="glass-card rounded-2xl p-5">
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">月平均股利</span>
+                    <div class="text-2xl font-bold text-blue-900 mt-1" id="monthlyAverageDividend">$0</div>
+                </div>
+                <div class="glass-card rounded-2xl p-5">
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">加權平均殖利率</span>
+                    <div class="text-2xl font-bold text-blue-900 mt-1" id="weightedAverageYield">0.00%</div>
+                </div>
+            </div>
+
+            <!-- 目標達成進度條 -->
+            <div class="glass-card rounded-2xl p-6">
+                <h3 class="text-lg font-bold mb-4">🎯 股利目標進度條</h3>
+                <div id="progressChart" class="flex justify-center"></div>
+            </div>
+
+            <!-- 缺口計算與加碼建議 -->
+            <div class="glass-card rounded-2xl p-6" id="shortfallSection">
+                <h3 class="text-lg font-bold mb-3">🔍 尚缺股數與加碼試算</h3>
+                <div id="shortfallAlert" class="p-4 mb-4 rounded-lg">
+                    <!-- JS 動態渲染提示訊息 -->
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="border-b border-gray-200 text-slate-500">
+                                <th class="pb-3">標的代碼</th>
+                                <th class="pb-3">標的名稱</th>
+                                <th class="pb-3">目前股價</th>
+                                <th class="pb-3"><span class="years-label">5</span>年平均股利</th>
+                                <th class="pb-3">加碼尚缺股數</th>
+                                <th class="pb-3">加碼尚缺張數</th>
+                                <th class="pb-3">加碼所需資金</th>
+                            </tr>
+                        </thead>
+                        <tbody id="shortfallTableBody">
+                            <!-- JS 動態渲染 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 投資組合占比分析 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="glass-card rounded-2xl p-6">
+                    <h3 class="text-md font-bold mb-4">📊 資產市值占比</h3>
+                    <div id="assetRatioChart"></div>
+                </div>
+                <div class="glass-card rounded-2xl p-6">
+                    <h3 class="text-md font-bold mb-4">📊 預估年股利來源占比</h3>
+                    <div id="dividendRatioChart"></div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- 引入前端邏輯 -->
+    <script src="app.js"></script>
+</body>
+</html>
