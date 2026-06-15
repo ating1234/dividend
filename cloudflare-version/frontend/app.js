@@ -198,14 +198,14 @@ function renderProgressChart(progressPct) {
                         show: true,
                         color: '#64748B',
                         fontSize: '16px',
-                        offsetY: -10
+                        offsetY: -20
                     },
                     value: {
                         show: true,
                         color: '#1E293B',
                         fontSize: '30px',
                         fontWeight: 'bold',
-                        offsetY: -5,
+                        offsetY: 15,
                         formatter: function (val) {
                             return val + "%";
                         }
