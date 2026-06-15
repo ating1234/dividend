@@ -370,25 +370,34 @@ async function handleClearCache() {
     }
 }
 
-// 處理匯出投資組合為 JSON 檔案
+// 處理匯出投資組合為 CSV 檔案
 function handleExportPortfolio() {
-    const portfolio = localStorage.getItem('portfolio');
-    if (!portfolio || JSON.parse(portfolio).length === 0) {
+    const portfolioStr = localStorage.getItem('portfolio');
+    if (!portfolioStr || JSON.parse(portfolioStr).length === 0) {
         alert('目前您的投資組合為空，無資料可匯出！');
         return;
     }
-    const blob = new Blob([portfolio], { type: 'application/json' });
+    const portfolio = JSON.parse(portfolioStr);
+    
+    // 組裝 CSV 內容
+    let csvContent = 'stock_id,shares\n';
+    portfolio.forEach(item => {
+        csvContent += `${item.stock_id},${item.shares}\n`;
+    });
+
+    // 加上 UTF-8 BOM 避免 Excel 開啟亂碼
+    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `dividend_portfolio_${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `dividend_portfolio_${new Date().toISOString().split('T')[0]}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 }
 
-// 處理匯入 JSON 檔案並更新投資組合
+// 處理匯入 CSV 檔案並更新投資組合
 function handleImportPortfolio(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -396,41 +405,53 @@ function handleImportPortfolio(event) {
     const reader = new FileReader();
     reader.onload = function(e) {
         try {
-            const importedData = JSON.parse(e.target.result);
+            const text = e.target.result;
+            const lines = text.split(/\r?\n/);
+            const importedData = [];
             
-            // 驗證格式結構是否為陣列
-            if (!Array.isArray(importedData)) {
-                throw new Error('匯入的資料格式必須是 JSON 陣列。');
-            }
-            
-            // 驗證陣列中每個元素是否都有 stock_id (string) 與 shares (number)
-            const isValid = importedData.every(item => 
-                item && 
-                typeof item.stock_id === 'string' && 
-                (typeof item.shares === 'number' || !isNaN(parseFloat(item.shares)))
-            );
-            
-            if (!isValid) {
-                throw new Error('備份檔案內部的欄位格式不正確 (需包含 stock_id 與 shares)。');
-            }
+            lines.forEach((line, index) => {
+                const cleanLine = line.trim();
+                if (!cleanLine) return; // 忽略空行
+                
+                // 忽略第一行表頭 (英文/中文表頭皆相容)
+                if (index === 0 && (
+                    cleanLine.toLowerCase().includes('stock_id') || 
+                    cleanLine.includes('代號') || 
+                    cleanLine.toLowerCase().includes('shares') || 
+                    cleanLine.includes('股數')
+                )) {
+                    return;
+                }
+                
+                const parts = cleanLine.split(',');
+                if (parts.length >= 2) {
+                    const stockId = parts[0].trim();
+                    const shares = parseFloat(parts[1].trim());
+                    
+                    if (stockId && !isNaN(shares) && shares > 0) {
+                        importedData.push({
+                            stock_id: stockId.toUpperCase(),
+                            shares: shares
+                        });
+                    }
+                }
+            });
 
-            // 格式化數據
-            const formattedData = importedData.map(item => ({
-                stock_id: item.stock_id.toUpperCase().trim(),
-                shares: parseFloat(item.shares)
-            }));
+            if (importedData.length === 0) {
+                throw new Error('找不到任何有效的持股資料，請確認 CSV 檔案格式。');
+            }
 
             // 詢問使用者要覆蓋還是合併
-            const confirmCover = confirm('📦 偵測到有效的投資組合備份！\n\n您要「覆蓋」目前的持股嗎？\n- 點擊【確定】：直接覆蓋目前的持股資料。\n- 點擊【取消】：將備份資料與現有持股合併（相同股票的股數會累加）。');
+            const confirmCover = confirm('📦 偵測到有效的投資組合 CSV 備份！\n\n您要「覆蓋」目前的持股嗎？\n- 點擊【確定】：直接覆蓋目前的持股資料。\n- 點擊【取消】：將備份資料與現有持股合併（相同股票的股數會累加）。');
             
             let newPortfolio = [];
             if (confirmCover) {
-                newPortfolio = formattedData;
+                newPortfolio = importedData;
             } else {
                 const currentPortfolio = JSON.parse(localStorage.getItem('portfolio')) || [];
                 newPortfolio = [...currentPortfolio];
                 
-                formattedData.forEach(importedItem => {
+                importedData.forEach(importedItem => {
                     const exists = newPortfolio.find(item => item.stock_id.toUpperCase() === importedItem.stock_id.toUpperCase());
                     if (exists) {
                         exists.shares += importedItem.shares;
@@ -445,7 +466,7 @@ function handleImportPortfolio(event) {
             alert('🎉 投資組合匯入成功！');
             updateUI();
         } catch (err) {
-            alert('❌ 匯入失敗：' + err.message + '\n請確保您選擇的是正確的股利計算機備份 JSON 檔。');
+            alert('❌ 匯入失敗：' + err.message + '\n請確保您選擇的是正確的持股 CSV 檔 (格式: 代號,股數)。');
         } finally {
             // 清空 file input，以便下次選同一個檔案也能觸發 change 事件
             event.target.value = '';
