@@ -95,17 +95,28 @@ async function handleDividendRequest(url: URL, env: Env): Promise<Response> {
 
     // 2. 獲取即時股價 (不論快取與否，都發起超輕量的最新股價請求，只抓 5d 的資料)
     let suffix = "TW"; // 預設為上市後綴
-    
-    // 嘗試上市後綴 .TW
     let yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${stockIdClean}.TW?interval=1d&range=5d`;
-    let response = await fetchWithUA(yahooUrl);
-    let resultJson: any = await response.json();
-    
-    if (!resultJson.chart.result) {
+    let resultJson: any = null;
+    let hasTWData = false;
+
+    try {
+      let response = await fetchWithUA(yahooUrl);
+      resultJson = await response.json();
+      if (resultJson && resultJson.chart && resultJson.chart.result) {
+        hasTWData = true;
+      }
+    } catch (err: any) {
+      // 如果不是 404 錯誤（比如是被限制流量的 429），應該直接拋出錯誤
+      if (!err.message.includes("404")) {
+        throw err;
+      }
+    }
+
+    if (!hasTWData) {
       // 嘗試上櫃後綴 .TWO
       suffix = "TWO";
       yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${stockIdClean}.TWO?interval=1d&range=5d`;
-      response = await fetchWithUA(yahooUrl);
+      let response = await fetchWithUA(yahooUrl);
       resultJson = await response.json();
     }
 
