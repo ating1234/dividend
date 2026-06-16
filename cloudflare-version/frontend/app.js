@@ -6,9 +6,7 @@ const API_BASE = window.location.hostname === 'localhost' || window.location.hos
 // 2. 初始化 LocalStorage 持股清單
 if (!localStorage.getItem('portfolio')) {
     const defaultPortfolio = [
-        { stock_id: '0050', shares: 5000 },
-        { stock_id: '2330', shares: 2000 },
-        { stock_id: '00878', shares: 10000 }
+        { stock_id: '0056', shares: 10000 }
     ];
     localStorage.setItem('portfolio', JSON.stringify(defaultPortfolio));
 }
