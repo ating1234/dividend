@@ -77,58 +77,65 @@
         
         <!-- 左側設定欄 -->
         <aside class="lg:col-span-1 flex flex-col gap-6">
-            <div class="glass-card rounded-2xl p-6 flex flex-col gap-5">
-                <h2 class="text-xl font-bold border-b pb-3 border-gray-200">⚙️ 財務規劃設定</h2>
-                
-                <!-- 股利目標 -->
-                <div>
-                    <label class="block text-sm font-semibold text-slate-500 mb-2">每月期望股利目標 (元)</label>
-                    <input type="number" id="monthlyTarget" value="30000" step="5000" class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <p class="text-xs text-slate-400 mt-1">年度總目標：<span id="annualTargetLabel" class="font-bold">360,000</span> 元</p>
+            <div class="glass-card rounded-2xl p-6">
+                <!-- 標題列：手機版可點擊 -->
+                <div id="settingsHeader" class="flex justify-between items-center cursor-pointer lg:cursor-default border-b pb-3 border-gray-200">
+                    <h2 class="text-xl font-bold">⚙️ 財務規劃設定</h2>
+                    <span id="settingsToggleArrow" class="lg:hidden text-slate-400 transition-transform duration-200">▼</span>
                 </div>
                 
-                <!-- 平均年數選擇 -->
-                <div>
-                    <label class="block text-sm font-semibold text-slate-500 mb-2">平均股利計算年數</label>
-                    <select id="selectedYears" class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="1">1 年平均</option>
-                        <option value="2">2 年平均</option>
-                        <option value="3">3 年平均</option>
-                        <option value="5" selected>5 年平均</option>
-                    </select>
-                </div>
+                <!-- 內容區塊：手機版預設隱藏 -->
+                <div id="settingsContent" class="hidden lg:flex flex-col gap-5 mt-5">
+                    <!-- 股利目標 -->
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-500 mb-2">每月期望股利目標 (元)</label>
+                        <input type="number" id="monthlyTarget" value="30000" step="5000" class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <p class="text-xs text-slate-400 mt-1">年度總目標：<span id="annualTargetLabel" class="font-bold">360,000</span> 元</p>
+                    </div>
+                    
+                    <!-- 平均年數選擇 -->
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-500 mb-2">平均股利計算年數</label>
+                        <select id="selectedYears" class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="1">1 年平均</option>
+                            <option value="2">2 年平均</option>
+                            <option value="3">3 年平均</option>
+                            <option value="5" selected>5 年平均</option>
+                        </select>
+                    </div>
 
-                <!-- 強制重刷快取 -->
-                <button id="clearCacheBtn" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-semibold py-2 rounded-lg transition-colors flex items-center justify-center gap-2">
-                    🔄 強制更新最新股利資料
-                </button>
-
-                <!-- 備份與還原 -->
-                <div class="flex gap-2">
-                    <button id="exportBtn" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 rounded-lg transition-colors border border-gray-300 flex items-center justify-center gap-1 text-sm">
-                        📥 匯出組合
+                    <!-- 強制重刷快取 -->
+                    <button id="clearCacheBtn" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-semibold py-2 rounded-lg transition-colors flex items-center justify-center gap-2">
+                        🔄 強制更新最新股利資料
                     </button>
-                    <button id="importBtn" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 rounded-lg transition-colors border border-gray-300 flex items-center justify-center gap-1 text-sm">
-                        📤 匯入組合
-                    </button>
-                    <input type="file" id="importFile" accept=".csv" class="hidden">
-                </div>
 
-                <hr class="border-gray-200">
-
-                <!-- 新增持股 -->
-                <div>
-                    <h3 class="text-md font-bold mb-3">➕ 新增持股標的</h3>
-                    <div class="flex flex-col gap-3">
-                        <div>
-                            <input type="text" id="newStockId" placeholder="股票/ETF 代碼 (如: 2330)" class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
-                        <div>
-                            <input type="number" id="newShares" placeholder="目前持有股數" step="1000" class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
-                        <button id="addStockBtn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 rounded-lg transition-colors">
-                            新增至投資組合
+                    <!-- 備份與還原 -->
+                    <div class="flex gap-2">
+                        <button id="exportBtn" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 rounded-lg transition-colors border border-gray-300 flex items-center justify-center gap-1 text-sm">
+                            📥 匯出組合
                         </button>
+                        <button id="importBtn" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 rounded-lg transition-colors border border-gray-300 flex items-center justify-center gap-1 text-sm">
+                            📤 匯入組合
+                        </button>
+                        <input type="file" id="importFile" accept=".csv" class="hidden">
+                    </div>
+
+                    <hr class="border-gray-200">
+
+                    <!-- 新增持股 -->
+                    <div>
+                        <h3 class="text-md font-bold mb-3">➕ 新增持股標的</h3>
+                        <div class="flex flex-col gap-3">
+                            <div>
+                                <input type="text" id="newStockId" placeholder="股票/ETF 代碼 (如: 2330)" class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <input type="number" id="newShares" placeholder="目前持有股數" step="1000" class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <button id="addStockBtn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 rounded-lg transition-colors">
+                                新增至投資組合
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

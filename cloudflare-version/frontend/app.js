@@ -22,6 +22,18 @@ let dividendChart = null;
 document.addEventListener('DOMContentLoaded', () => {
     initApp();
     
+    // 手機版：財務規劃設定欄展開與收合控制
+    const settingsHeader = document.getElementById('settingsHeader');
+    const settingsContent = document.getElementById('settingsContent');
+    const settingsToggleArrow = document.getElementById('settingsToggleArrow');
+    
+    settingsHeader.addEventListener('click', () => {
+        if (window.innerWidth < 1024) {
+            const isCollapsed = settingsContent.classList.toggle('hidden');
+            settingsToggleArrow.style.transform = isCollapsed ? 'rotate(0deg)' : 'rotate(180deg)';
+        }
+    });
+    
     // 綁定輸入框與選單變更
     document.getElementById('monthlyTarget').addEventListener('input', () => {
         updateTargetLabels();
