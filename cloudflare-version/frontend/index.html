@@ -3,7 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📊 台股股利目標與缺口計算機 (Cloudflare Edge)</title>
+    <title>📊 台股股利目標與缺口計算機 | 存股被動收入與缺口試算</title>
+    
+    <!-- SEO & AI Search Optimization (AIO) -->
+    <meta name="description" content="免費線上台股股利目標與缺口計算機。以歷史平均配息資料為核心，精準分析您的存股目標完成度與加碼缺口，助您輕鬆規劃被動收入與財務自由藍圖。">
+    <meta name="keywords" content="股利計算機, 存股目標, 存股缺口, 被動收入, 財務自由, 台股配息, 股息計算, D1快取, 邊緣運算">
+    <meta name="author" content="ating123">
+    <link rel="canonical" href="https://dividend.ating123.com/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://dividend.ating123.com/">
+    <meta property="og:title" content="📊 台股股利目標與缺口計算機 | 存股被動收入規劃">
+    <meta property="og:description" content="以過去平均配息資料為核心，分析您的存股目標完成度與加碼缺口！支援 LocalStorage 本地存檔與邊緣快取技術。">
+    <meta property="og:image" content="https://dividend.ating123.com/sitemap.xml">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://dividend.ating123.com/">
+    <meta name="twitter:title" content="📊 台股股利目標與缺口計算機 | 存股被動收入規劃">
+    <meta name="twitter:description" content="以過去平均配息資料為核心，分析您的存股目標完成度與加碼缺口！支援 LocalStorage 本地存檔與邊緣快取技術。">
+
+    <!-- Schema.org JSON-LD 結構化資料 (AI 搜尋引擎最愛) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "台股股利目標與缺口計算機",
+      "url": "https://dividend.ating123.com",
+      "description": "基於 Cloudflare Edge 技術，以歷史平均配息資料為核心，計算存股目標達成率、加碼缺口、市值占比與預估年股利來源的免費線上工具。",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "All",
+      "author": {
+        "@type": "Person",
+        "name": "ating123"
+      },
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "TWD"
+      }
+    }
+    </script>
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts -->
@@ -34,7 +76,7 @@
     <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-6">
         
         <!-- 左側設定欄 -->
-        <div class="lg:col-span-1 flex flex-col gap-6">
+        <aside class="lg:col-span-1 flex flex-col gap-6">
             <div class="glass-card rounded-2xl p-6 flex flex-col gap-5">
                 <h2 class="text-xl font-bold border-b pb-3 border-gray-200">⚙️ 財務規劃設定</h2>
                 
@@ -90,17 +132,17 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </aside>
 
         <!-- 右側內容與數據呈現 -->
-        <div class="lg:col-span-3 flex flex-col gap-6">
+        <main class="lg:col-span-3 flex flex-col gap-6">
             
             <!-- 標題 -->
-            <div>
+            <header>
                 <h1 class="text-4xl font-bold text-gradient">📊 台股股利目標與缺口計算機</h1>
                 <p class="text-slate-500 mt-2 text-sm md:text-base">以過去平均配息資料為核心，分析您的存股目標完成度與缺口！</p>
                 <p class="text-slate-400 mt-1 text-xs">⚠️ 股票配息資訊來源為網路，僅提供參考，正確資料請參考各家發行商網站！</p>
-            </div>
+            </header>
 
             <!-- 目前投資組合表格 -->
             <div class="glass-card rounded-2xl p-6">
@@ -201,7 +243,12 @@
                 </div>
             </div>
             
-        </div>
+            <!-- 頁尾免責聲明與著作權 -->
+            <footer class="mt-8 text-center text-xs text-slate-400">
+                <p>© 2026 台股股利目標與缺口計算機. All rights reserved. 本網站僅供個人存股規劃參考，不構成任何買賣與投資建議。</p>
+            </footer>
+            
+        </main>
     </div>
 
     <!-- 引入前端邏輯 -->
