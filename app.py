@@ -347,3 +347,13 @@ if 'df' in locals() and not df.empty:
 
 else:
     st.info("請在左側邊欄輸入股票資料，並點選「新增至投資組合」開始試算。")
+
+# 5. 頁尾資訊與 Bug 回報
+st.markdown("---")
+st.markdown(
+    '<p style="text-align: center; color: #64748B; font-size: 0.9rem;">'
+    '系統破防了？👉 <a href="https://bug-center.pages.dev/login" target="_blank" style="color: #4D96FF; text-decoration: none; font-weight: bold;">回報 Bug</a>'
+    '</p>',
+    unsafe_allow_html=True
+)
+
