@@ -484,3 +484,95 @@ function handleImportPortfolio(event) {
     };
     reader.readAsText(file);
 }
+
+// ==========================================
+// Bug 回報彈窗與表單送出邏輯
+// ==========================================
+document.addEventListener("DOMContentLoaded", () => {
+    const openBugModalBtn = document.getElementById("openBugModalBtn");
+    const closeBugModalBtn = document.getElementById("closeBugModalBtn");
+    const bugReportModal = document.getElementById("bugReportModal");
+    const bugReportForm = document.getElementById("bugReportForm");
+    const bugAlert = document.getElementById("bugAlert");
+
+    if (openBugModalBtn && bugReportModal) {
+        openBugModalBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            bugReportModal.classList.remove("hidden");
+            if (bugAlert) bugAlert.classList.add("hidden");
+            if (bugReportForm) bugReportForm.reset();
+        });
+    }
+
+    if (closeBugModalBtn && bugReportModal) {
+        closeBugModalBtn.addEventListener("click", () => {
+            bugReportModal.classList.add("hidden");
+        });
+    }
+
+    // 點擊 Modal 外部以關閉
+    window.addEventListener("click", (e) => {
+        if (e.target === bugReportModal) {
+            bugReportModal.classList.add("hidden");
+        }
+    });
+
+    if (bugReportForm) {
+        bugReportForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            
+            const title = document.getElementById("bugTitle").value;
+            const description = document.getElementById("bugDescription").value;
+            const email = document.getElementById("bugEmail").value;
+            const submitBtn = document.getElementById("submitBugBtn");
+            
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerText = "傳送中...";
+            }
+            
+            try {
+                // 這裡呼叫後端 API Worker (由 /api/report-bug 轉發，安全保護 API Key)
+                const response = await fetch("/api/report-bug", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        app_name: "台股股利計算機 (Cloudflare)",
+                        title: title,
+                        description: description,
+                        email: email
+                    })
+                });
+                
+                const result = await response.json();
+                if (response.ok && result.success) {
+                    if (bugAlert) {
+                        bugAlert.className = "p-3 rounded-lg text-sm bg-green-100 text-green-700";
+                        bugAlert.innerText = "🎉 回報成功！感謝您的協助。";
+                        bugAlert.classList.remove("hidden");
+                    }
+                    
+                    setTimeout(() => {
+                        bugReportModal.classList.add("hidden");
+                    }, 2000);
+                } else {
+                    throw new Error(result.message || result.msg || "回報失敗");
+                }
+            } catch (err) {
+                if (bugAlert) {
+                    bugAlert.className = "p-3 rounded-lg text-sm bg-red-100 text-red-700";
+                    bugAlert.innerText = `❌ ${err.message}`;
+                    bugAlert.classList.remove("hidden");
+                }
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = "送出回報";
+                }
+            }
+        });
+    }
+});
+

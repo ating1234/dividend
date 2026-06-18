@@ -1,5 +1,6 @@
 export interface Env {
   DB: D1Database;
+  BUG_CENTER_API_KEY?: string;
 }
 
 // CORS 跨域回應標頭設定
@@ -27,6 +28,11 @@ export default {
     // 路由 2: 清除快取
     if (url.pathname === "/api/clear-cache" && request.method === "POST") {
       return handleClearCache(env);
+    }
+
+    // 路由 3: 回報 Bug
+    if (url.pathname === "/api/report-bug" && request.method === "POST") {
+      return handleReportBug(request, env);
     }
 
     // 404 未找到
@@ -298,6 +304,60 @@ async function handleClearCache(env: Env): Promise<Response> {
     });
   } catch (error: any) {
     return new Response(JSON.stringify({ success: false, msg: `清除快取失敗: ${error.message}` }), {
+      status: 500,
+      headers: corsHeaders
+    });
+  }
+}
+
+// 處理 Bug 回報轉發至 bug-center
+async function handleReportBug(request: Request, env: Env): Promise<Response> {
+  try {
+    const payload: any = await request.json();
+    
+    // 從環境變數中取得金鑰
+    const apiKey = env.BUG_CENTER_API_KEY || "";
+    if (!apiKey) {
+      return new Response(JSON.stringify({ success: false, msg: "後端未配置 BUG_CENTER_API_KEY 變數" }), {
+        status: 500,
+        headers: corsHeaders
+      });
+    }
+
+    const response = await fetch("https://bug-center.pages.dev/api/reports", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Bug-API-Key": apiKey
+      },
+      body: JSON.stringify({
+        app_name: payload.app_name || "台股股利計算機",
+        title: payload.title,
+        description: payload.description,
+        email: payload.email || "",
+        meta: {
+          timestamp: new Date().toISOString(),
+          ip: request.headers.get("CF-Connecting-IP") || "Unknown"
+        }
+      })
+    });
+
+    const resultText = await response.text();
+    let resultJson: any;
+    try {
+      resultJson = JSON.parse(resultText);
+    } catch {
+      resultJson = { success: false, msg: "解析 bug-center 回應失敗" };
+    }
+
+    return new Response(JSON.stringify(resultJson), {
+      status: response.status,
+      headers: corsHeaders
+    });
+
+  } catch (error: any) {
+    return new Response(JSON.stringify({ success: false, msg: `發送失敗: ${error.message}` }), {
+      status: 500,
       headers: corsHeaders
     });
   }

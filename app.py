@@ -350,10 +350,55 @@ else:
 
 # 5. 頁尾資訊與 Bug 回報
 st.markdown("---")
-st.markdown(
-    '<p style="text-align: center; color: #64748B; font-size: 0.9rem;">'
-    '系統破防了？👉 <a href="https://bug-center.pages.dev/login" target="_blank" style="color: #4D96FF; text-decoration: none; font-weight: bold;">回報 Bug</a>'
-    '</p>',
-    unsafe_allow_html=True
-)
+col_foot_text, col_foot_btn = st.columns([4, 1])
+with col_foot_text:
+    st.markdown(
+        '<p style="color: #64748B; font-size: 0.9rem; margin-top: 10px;">'
+        '© 2026 台股股利目標與缺口計算機. All rights reserved. 本網站僅供個人存股規劃參考，不構成任何買賣與投資建議。'
+        '</p>',
+        unsafe_allow_html=True
+    )
+with col_foot_btn:
+    if 'show_bug_report' not in st.session_state:
+        st.session_state.show_bug_report = False
+    
+    if st.button("🐞 系統破防了？回報 Bug", use_container_width=True):
+        st.session_state.show_bug_report = not st.session_state.show_bug_report
+
+if st.session_state.show_bug_report:
+    with st.form("bug_report_form", clear_on_submit=True):
+        st.subheader("🐞 回報系統 Bug")
+        bug_title = st.text_input("主旨 (必填)", placeholder="例如：無法載入 2330 股利資料")
+        bug_desc = st.text_area("詳細描述 (必填)", placeholder="請描述您遇到的問題與重現步驟...")
+        bug_email = st.text_input("聯絡信箱 (選填)", placeholder="您的 Email，方便我們回覆")
+        
+        submitted = st.form_submit_button("送出回報")
+        if submitted:
+            if not bug_title or not bug_desc:
+                st.error("請填寫主旨與詳細描述！")
+            else:
+                import requests
+                api_key = st.secrets.get("BUG_CENTER_API_KEY", "")
+                
+                try:
+                    payload = {
+                        "app_name": "台股股利計算機 (Streamlit)",
+                        "title": bug_title,
+                        "description": bug_desc,
+                        "email": bug_email
+                    }
+                    res = requests.post(
+                        "https://bug-center.pages.dev/api/reports",
+                        json=payload,
+                        headers={"X-Bug-API-Key": api_key}
+                    )
+                    res_json = res.json()
+                    if res.status_code == 200 and res_json.get("success"):
+                        st.success("🎉 回報成功！感謝您的協助。")
+                        st.session_state.show_bug_report = False
+                    else:
+                        st.error(f"回報失敗：{res_json.get('message', '未知錯誤')}")
+                except Exception as e:
+                    st.error(f"連線失敗：{str(e)}")
+
 

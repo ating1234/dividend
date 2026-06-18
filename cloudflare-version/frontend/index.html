@@ -257,11 +257,39 @@
             <footer class="mt-8 text-center text-xs text-slate-400">
                 <p>© 2026 台股股利目標與缺口計算機. All rights reserved. 本網站僅供個人存股規劃參考，不構成任何買賣與投資建議。</p>
                 <p class="text-sm font-semibold text-slate-500 mt-2">
-                    系統破防了？👉 <a href="https://bug-center.pages.dev/login" target="_blank" class="text-blue-500 hover:text-blue-600 transition-colors">回報 Bug</a>
+                    系統破防了？👉 <button id="openBugModalBtn" class="text-blue-500 hover:text-blue-600 transition-colors font-semibold outline-none focus:outline-none">回報 Bug</button>
                 </p>
             </footer>
             
         </main>
+        </div>
+    </div>
+
+    <!-- Bug 回報 Modal 燈箱 -->
+    <div id="bugReportModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+        <div class="glass-card rounded-2xl p-6 max-w-lg w-full mx-4 flex flex-col gap-4">
+            <div class="flex justify-between items-center border-b pb-3 border-gray-200">
+                <h3 class="text-xl font-bold text-gradient">🐞 回報系統 Bug</h3>
+                <button id="closeBugModalBtn" class="text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
+            </div>
+            <form id="bugReportForm" class="flex flex-col gap-4 text-left">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-500 mb-1">主旨 (必填)</label>
+                    <input type="text" id="bugTitle" required placeholder="例如：0050 無法取得配息資料" class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-500 mb-1">詳細描述 (必填)</label>
+                    <textarea id="bugDescription" required rows="4" placeholder="請詳細描述您遇到的問題與重現步驟..." class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-500 mb-1">聯絡信箱 (選填)</label>
+                    <input type="email" id="bugEmail" placeholder="您的 Email，方便我們與您聯絡" class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div id="bugAlert" class="hidden p-3 rounded-lg text-sm"></div>
+                <button type="submit" id="submitBugBtn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 rounded-lg transition-colors">
+                    送出回報
+                </button>
+            </form>
         </div>
     </div>
 
