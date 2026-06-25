@@ -78,8 +78,13 @@ document.addEventListener('DOMContentLoaded', () => {
         agentBtnLed.classList.add('bg-amber-300');
 
         try {
+            // 檢查 window.PageAgent 是否載入成功
+            if (!window.PageAgent) {
+                throw new Error("window.PageAgent is not defined. CDN 資源載入失敗！");
+            }
+
             // 初始化 PageAgent
-            agentInstance = new PageAgent({
+            agentInstance = new window.PageAgent({
                 baseURL: API_BASE + '/api', // 發送請求到 /api/chat/completions
                 apiKey: 'cf-secret',
                 model: 'placeholder-model',
