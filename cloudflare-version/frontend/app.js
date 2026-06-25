@@ -59,6 +59,47 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // 第一次載入 UI
     updateUI();
+
+    // 5. 綁定 AI 網頁助手按鈕
+    let agentInstance = null;
+    const startPageAgentBtn = document.getElementById('startPageAgentBtn');
+    const agentBtnLed = document.getElementById('agentBtnLed');
+    const agentBtnText = document.getElementById('agentBtnText');
+
+    startPageAgentBtn.addEventListener('click', async () => {
+        if (agentInstance) {
+            agentInstance.panel.show();
+            return;
+        }
+        
+        startPageAgentBtn.disabled = true;
+        agentBtnText.textContent = "載入中...";
+        agentBtnLed.classList.remove('bg-emerald-300');
+        agentBtnLed.classList.add('bg-amber-300');
+
+        try {
+            // 初始化 PageAgent
+            agentInstance = new PageAgent({
+                baseURL: API_BASE + '/api', // 發送請求到 /api/chat/completions
+                apiKey: 'cf-secret',
+                model: 'placeholder-model',
+                language: 'zh-CN'
+            });
+            agentInstance.panel.show();
+            agentBtnText.textContent = "AI 網頁助手已啟動";
+            agentBtnLed.classList.remove('bg-amber-300');
+            agentBtnLed.classList.add('bg-teal-300');
+            agentBtnLed.classList.remove('animate-pulse');
+        } catch (err) {
+            console.error('Failed to start PageAgent:', err);
+            alert('無法啟動 AI 網頁助手，請稍後再試。');
+            agentBtnText.textContent = "啟動 AI 網頁助手";
+            agentBtnLed.classList.remove('bg-amber-300');
+            agentBtnLed.classList.add('bg-emerald-300 animate-pulse');
+        } finally {
+            startPageAgentBtn.disabled = false;
+        }
+    });
 });
 
 // 更新年度目標標示

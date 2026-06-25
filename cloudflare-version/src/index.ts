@@ -1,6 +1,9 @@
 export interface Env {
   DB: D1Database;
   BUG_CENTER_API_KEY?: string;
+  LLM_API_KEY?: string;
+  LLM_BASE_URL?: string;
+  LLM_MODEL?: string;
 }
 
 // CORS 跨域回應標頭設定
@@ -33,6 +36,11 @@ export default {
     // 路由 3: 回報 Bug
     if (url.pathname === "/api/report-bug" && request.method === "POST") {
       return handleReportBug(request, env);
+    }
+
+    // 路由 4: AI 助手 Chat Completions 代理
+    if (url.pathname === "/api/chat/completions" && request.method === "POST") {
+      return handleChatCompletions(request, env);
     }
 
     // 404 未找到
@@ -359,6 +367,70 @@ async function handleReportBug(request: Request, env: Env): Promise<Response> {
     return new Response(JSON.stringify({ success: false, msg: `發送失敗: ${error.message}` }), {
       status: 500,
       headers: corsHeaders
+    });
+  }
+}
+
+// 處理 Chat Completions 請求轉發 (PageAgent 代理)
+async function handleChatCompletions(request: Request, env: Env): Promise<Response> {
+  try {
+    const apiKey = env.LLM_API_KEY;
+    const baseURL = env.LLM_BASE_URL || "https://api.openai.com/v1";
+    const defaultModel = env.LLM_MODEL || "gpt-4o-mini";
+
+    if (!apiKey) {
+      return new Response(JSON.stringify({ error: "LLM_API_KEY is not configured on the server." }), {
+        status: 500,
+        headers: corsHeaders,
+      });
+    }
+
+    const requestData: any = await request.json();
+
+    // 如果前端沒有指定 model 或我們想強制覆蓋它：
+    if (!requestData.model || requestData.model === 'placeholder-model') {
+      requestData.model = defaultModel;
+    }
+
+    const cleanBaseURL = baseURL.replace(/\/+$/, "");
+    const targetURL = `${cleanBaseURL}/chat/completions`;
+
+    const headers = new Headers();
+    headers.set("Content-Type", "application/json");
+    headers.set("Authorization", `Bearer ${apiKey}`);
+
+    const llmResponse = await fetch(targetURL, {
+      method: "POST",
+      headers: headers,
+      body: JSON.stringify(requestData),
+    });
+
+    // 支援 SSE Stream 流式傳輸
+    const contentType = llmResponse.headers.get("content-type") || "";
+    if (contentType.includes("text/event-stream")) {
+      return new Response(llmResponse.body, {
+        status: llmResponse.status,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type",
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache",
+          "Connection": "keep-alive",
+        },
+      });
+    }
+
+    const responseBody = await llmResponse.text();
+    return new Response(responseBody, {
+      status: llmResponse.status,
+      headers: corsHeaders,
+    });
+
+  } catch (err: any) {
+    return new Response(JSON.stringify({ error: err.message || "Internal Server Error" }), {
+      status: 500,
+      headers: corsHeaders,
     });
   }
 }

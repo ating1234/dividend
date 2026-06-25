@@ -80,6 +80,12 @@
             <h1 class="text-4xl font-bold text-gradient">📊 台股股利目標與缺口計算機</h1>
             <p class="text-slate-500 mt-2 text-sm md:text-base">以過去平均配息資料為核心，分析您的存股目標完成度與缺口！</p>
             <p class="text-slate-400 mt-1 text-xs">⚠️ 股票配息資訊來源為網路，僅提供參考，正確資料請參考各家發行商網站！</p>
+            <div class="mt-4 flex flex-wrap gap-2 items-center">
+                <button id="startPageAgentBtn" class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold py-2 px-4 rounded-xl transition-all shadow-md hover:shadow-lg flex items-center gap-2 text-sm outline-none focus:outline-none">
+                    <span id="agentBtnLed" class="w-2.5 h-2.5 rounded-full bg-emerald-300 animate-pulse"></span>
+                    <span id="agentBtnText">🤖 啟動 AI 網頁助手</span>
+                </button>
+            </div>
         </header>
 
         <!-- 設定欄與主數據區 (Grid) -->
@@ -293,6 +299,9 @@
         </div>
     </div>
 
+    <!-- PageAgent Client Library -->
+    <script src="https://cdn.jsdelivr.net/npm/page-agent@latest/dist/iife/page-agent.js" crossorigin="true"></script>
+    
     <!-- 引入前端邏輯 -->
     <script src="app.js"></script>
 </body>
